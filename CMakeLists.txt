@@ -1,0 +1,105 @@
+cmake_minimum_required(VERSION 3.5)
+
+project(OpenDGLab-Desktop LANGUAGES CXX)
+
+set(CMAKE_INCLUDE_CURRENT_DIR ON)
+
+set(CMAKE_AUTOUIC ON)
+set(CMAKE_AUTOMOC ON)
+set(CMAKE_AUTORCC ON)
+
+set(CMAKE_CXX_STANDARD 17)
+set(CMAKE_CXX_STANDARD_REQUIRED ON)
+set(OPENDGLABCORE_HEADER ${CMAKE_SOURCE_DIR}/opendglab-core/header)
+if (WIN32)
+    set(OPENDGLABCORE_LIB ${CMAKE_SOURCE_DIR}/opendglab-core/bin/libopendglab.lib)
+    set(OPENDGLABCORE_BIN ${CMAKE_SOURCE_DIR}/opendglab-core/bin/libopendglab.dll)
+else()
+    message(FATAL_ERROR "This platform need some config.")
+endif()
+
+include_directories(${OPENDGLABCORE_HEADER})
+find_package(QT NAMES Qt6 Qt5 COMPONENTS Widgets Bluetooth REQUIRED)
+find_package(Qt${QT_VERSION_MAJOR} COMPONENTS Widgets Bluetooth REQUIRED)
+add_compile_options("$<$<C_COMPILER_ID:MSVC>:/utf-8>")
+add_compile_options("$<$<CXX_COMPILER_ID:MSVC>:/utf-8>")
+if(Qt5_FOUND AND WIN32 AND TARGET Qt5::qmake AND NOT TARGET Qt5::windeployqt)
+    get_target_property(_qt5_qmake_location Qt5::qmake IMPORTED_LOCATION)
+
+    execute_process(
+        COMMAND "${_qt5_qmake_location}" -query QT_INSTALL_PREFIX
+        RESULT_VARIABLE return_code
+        OUTPUT_VARIABLE qt5_install_prefix
+        OUTPUT_STRIP_TRAILING_WHITESPACE
+    )
+    set(imported_location "${qt5_install_prefix}/bin/windeployqt.exe")
+
+    if(EXISTS ${imported_location})
+        add_executable(Qt5::windeployqt IMPORTED)
+
+        set_target_properties(Qt5::windeployqt PROPERTIES
+            IMPORTED_LOCATION ${imported_location}
+        )
+    endif()
+endif()
+file(GLOB_RECURSE OpenDGLabDesktop_SRC
+    "src/*.h"
+    "src/*.cpp"
+    "src/*.ui"
+)
+if (WIN32)
+    set(APP_ICON_RESOURCE_WINDOWS "${CMAKE_CURRENT_SOURCE_DIR}/res/icon.rc")
+    add_executable(OpenDGLab-Desktop WIN32 ${OpenDGLabDesktop_SRC} res/image.qrc ${APP_ICON_RESOURCE_WINDOWS})
+else()
+    add_executable(OpenDGLab-Desktop ${OpenDGLabDesktop_SRC} res/image.qrc)
+endif()
+add_library(libopendglab STATIC IMPORTED)
+set_property(TARGET libopendglab PROPERTY IMPORTED_LOCATION ${OPENDGLABCORE_LIB})
+target_link_libraries(OpenDGLab-Desktop PRIVATE Qt${QT_VERSION_MAJOR}::Widgets Qt${QT_VERSION_MAJOR}::Bluetooth libopendglab)
+
+if(TARGET Qt5::windeployqt)
+    if("${CMAKE_SIZEOF_VOID_P}" STREQUAL "4")
+        set(WIN_ARCH "x86")
+    else()
+        set(WIN_ARCH "x64")
+    endif()
+    add_custom_command(TARGET OpenDGLab-Desktop
+        POST_BUILD
+        COMMAND ${CMAKE_COMMAND} -E remove_directory "${CMAKE_CURRENT_BINARY_DIR}/OpenDGLab-Desktop-${WIN_ARCH}"
+        COMMAND set PATH=%PATH%$<SEMICOLON>${qt5_install_prefix}/bin
+        COMMAND Qt5::windeployqt --dir "${CMAKE_CURRENT_BINARY_DIR}/OpenDGLab-Desktop-${WIN_ARCH}" "$<TARGET_FILE_DIR:OpenDGLab-Desktop>/$<TARGET_FILE_NAME:OpenDGLab-Desktop>"
+    )
+    install(
+        TARGETS OpenDGLab-Desktop
+        ARCHIVE DESTINATION ${CMAKE_SOURCE_DIR}/target/bin
+        LIBRARY DESTINATION ${CMAKE_SOURCE_DIR}/target/bin
+        RUNTIME DESTINATION ${CMAKE_SOURCE_DIR}/target/bin
+        PUBLIC_HEADER DESTINATION ${CMAKE_SOURCE_DIR}/target/bin
+    )
+
+    # copy deployment directory during installation
+    install(
+        DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}/OpenDGLab-Desktop-${WIN_ARCH}/"
+        DESTINATION ${OpenDGLab-Desktop_BINARY_DIR}
+    )
+
+    set(CMAKE_INSTALL_SYSTEM_RUNTIME_LIBS_SKIP TRUE)
+
+    include(InstallRequiredSystemLibraries)
+
+    install(
+        PROGRAMS ${CMAKE_INSTALL_SYSTEM_RUNTIME_LIBS}
+        DESTINATION ${OpenDGLab-Desktop_BINARY_DIR}
+    )
+    add_custom_command(TARGET OpenDGLab-Desktop POST_BUILD
+        COMMAND ${CMAKE_COMMAND} -E copy_if_different
+            ${OPENDGLABCORE_BIN}
+            "$<TARGET_FILE_DIR:OpenDGLab-Desktop>/OpenDGLab-Desktop-${WIN_ARCH}/")
+    add_custom_command(TARGET OpenDGLab-Desktop POST_BUILD
+        COMMAND ${CMAKE_COMMAND} -E copy_if_different
+            $<TARGET_FILE:OpenDGLab-Desktop>
+            "$<TARGET_FILE_DIR:OpenDGLab-Desktop>/OpenDGLab-Desktop-${WIN_ARCH}/")
+    add_custom_command(TARGET OpenDGLab-Desktop POST_BUILD
+        COMMAND ${CMAKE_COMMAND} -E tar "cfv" "OpenDGLab-Desktop-${WIN_ARCH}.zip" --format=zip
+        "$<TARGET_FILE_DIR:OpenDGLab-Desktop>/OpenDGLab-Desktop-${WIN_ARCH}")
+endif()
