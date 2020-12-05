@@ -80,8 +80,8 @@ jobs:
           Copy-Item -Path "OpenDGLab-Core-Unzipped/releaseShared/libopendglab_api.h" -Destination "opendglab-core/header/"
           Copy-Item -Path "OpenDGLab-Core-Unzipped/releaseShared/libopendglab.dll" -Destination "opendglab-core/bin/"
           Copy-Item -Path "OpenDGLab-Core-Unzipped/releaseShared/libopendglab.def" -Destination "opendglab-core/bin/"
-      - name: Get latest CMake and ninja
-        uses: lukka/get-cmake@latest
+      - name: Get CMake and ninja v3.18.3
+        uses: lukka/get-cmake@v3.18.3
       - name: Windows Build
         shell: cmd
         env:
