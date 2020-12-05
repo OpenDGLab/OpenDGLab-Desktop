@@ -140,8 +140,8 @@ jobs:
           unzip OpenDGLab-Core-Linux-X64.zip -d OpenDGLab-Core-Unzipped
           mkdir -p opendglab-core/header
           mkdir -p opendglab-core/bin
-          cp OpenDGLab-Core-Unzipped/releaseShared/libopendglab_api.h opendglab-core/header/
-          cp OpenDGLab-Core-Unzipped/releaseShared/libopendglab.a opendglab-core/bin/
+          cp OpenDGLab-Core-Unzipped/releaseStatic/libopendglab_api.h opendglab-core/header/
+          cp OpenDGLab-Core-Unzipped/releaseStatic/libopendglab.a opendglab-core/bin/
       - name: Get latest CMake and ninja
         uses: lukka/get-cmake@latest
       - name: Linuz Build
