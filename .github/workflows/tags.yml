@@ -4,26 +4,26 @@ on:
     tags:
       - v*
 jobs:
-  create_release:
-    name: Create release
+  create_release_windows:
+    name: Create release windows
     runs-on: ubuntu-latest
     outputs:
-      upload_url: ${{ steps.create_release.outputs.upload_url }}
+      upload_url: ${{ steps.create_release_windows.outputs.upload_url }}
       version: ${{ steps.get_version.outputs.version }}
     steps:
       - name: Get latest release version number
         id: get_version
         uses: battila7/get-version-action@v2
       - name: Create Release
-        id: create_release
+        id: create_release_windows
         uses: actions/create-release@v1
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
           tag_name: ${{ github.ref }}
-          release_name: OpenDGLab Desktop ${{ steps.get_version.outputs.version }}
+          release_name: OpenDGLab Desktop Windows ${{ steps.get_version.outputs.version }}
           body: |
-            OpenDGLab Desktop ${{ steps.get_version.outputs.version }}
+            OpenDGLab Desktop Windows ${{ steps.get_version.outputs.version }}
           draft: false
           prerelease: false
   build:
@@ -40,7 +40,7 @@ jobs:
           - qt_arch: win32_msvc2019
             msvc_arch: x86
             qt_arch_install: msvc2019
-    needs: [create_release]
+    needs: [create_release_windows]
     runs-on: ${{ matrix.os }}
     steps:
       - name: Cache Qt
@@ -58,12 +58,37 @@ jobs:
           cached: ${{steps.windows-cache-qt.outputs.cache-hit }}
       - name: Checkout
         uses: actions/checkout@v1
+      - name: Get OpenDGLab Core Windows x64
+        if: matrix.msvc_arch == 'x64'
+        shell: powershell
+        run: |
+          Invoke-WebRequest https://github.com/OpenDGLab/OpenDGLab-Core/releases/latest/download/OpenDGLab-Core-Windows-X64.zip -OutFile OpenDGLab-Core-Windows-X64.zip
+          Expand-Archive OpenDGLab-Core-Windows-X64.zip -DestinationPath OpenDGLab-Core-Unzipped
+          New-Item OpenDGLab-Core/header -ItemType Directory -ea 0
+          New-Item OpenDGLab-Core/bin -ItemType Directory -ea 0
+          Copy-Item -Path "OpenDGLab-Core-Unzipped/releaseShared/libopendglab_api.h" -Destination "OpenDGLab-Core/header/"
+          Copy-Item -Path "OpenDGLab-Core-Unzipped/releaseShared/libopendglab.dll" -Destination "OpenDGLab-Core/bin/"
+          Copy-Item -Path "OpenDGLab-Core-Unzipped/releaseShared/libopendglab.def" -Destination "OpenDGLab-Core/bin/"
+      - name: Get OpenDGLab Core Windows x86
+        if: matrix.msvc_arch == 'x86'
+        shell: powershell
+        run: |
+          Invoke-WebRequest https://github.com/OpenDGLab/OpenDGLab-Core/releases/latest/download/OpenDGLab-Core-Windows-X86.zip -OutFile OpenDGLab-Core-Windows-X86.zip
+          Expand-Archive OpenDGLab-Core-Windows-X86.zip -DestinationPath OpenDGLab-Core-Unzipped
+          New-Item OpenDGLab-Core/header -ItemType Directory -ea 0
+          New-Item OpenDGLab-Core/bin -ItemType Directory -ea 0
+          Copy-Item -Path "OpenDGLab-Core-Unzipped/releaseShared/libopendglab_api.h" -Destination "OpenDGLab-Core/header/"
+          Copy-Item -Path "OpenDGLab-Core-Unzipped/releaseShared/libopendglab.dll" -Destination "OpenDGLab-Core/bin/"
+          Copy-Item -Path "OpenDGLab-Core-Unzipped/releaseShared/libopendglab.def" -Destination "OpenDGLab-Core/bin/"
       - name: Windows Build
         shell: cmd
         env:
           vc_arch: ${{ matrix.msvc_arch }}
         run: |
           call "C:\Program Files (x86)\Microsoft Visual Studio\2019\Enterprise\VC\Auxiliary\Build\vcvarsall.bat" %vc_arch%
+          cd OpenDGLab-Core/bin
+          lib /def:libopendglab.def /out:libopendglab.lib /machine:%vc_arch%
+          cd ../..
           mkdir build
           cd build
           cmake ..
