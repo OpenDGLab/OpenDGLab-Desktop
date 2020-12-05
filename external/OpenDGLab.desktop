@@ -1,0 +1,7 @@
+[Desktop Entry]
+Type=Application
+Name=OpenDGLab Desktop
+Exec=AppRun %F
+Icon=OpenDGLab
+Comment=Open source solution to control DG-Lab Device
+Categories=Utility;Application;

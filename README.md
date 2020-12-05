@@ -27,7 +27,14 @@ cmake --build . --target all
 在 Build 文件夹下可以找到编译好的对应版本的 zip 压缩文件。
 
 ### 编译 OpenDGLab Desktop (Linux)
-即将完成...
+如果需要打包未 AppImage 请安装 linuxdeployqt
+```shell
+mkdir build
+cd build
+cmake -DCMAKE_BUILD_TYPE=MinSizeRel ..
+cmake --build . --target all
+```
+编译后会生成 OpenDGLab-Desktop 可执行文件，您需要使用 `sudo setcap CAP_NET_ADMIN+ep OpenDGLab-Desktop` 和 `chmod +x OpenDGLab-Desktop` 来对其添加权限。
 
 ### 编译 OpenDGLab Desktop (MacOS)
 暂时无法测试
