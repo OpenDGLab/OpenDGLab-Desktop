@@ -53,7 +53,7 @@ if (WIN32)
 else()
     add_executable(OpenDGLab-Desktop ${OpenDGLabDesktop_SRC} res/image.qrc)
 endif()
-add_library(libopendglab STATIC IMPORTED)
+add_library(libopendglab SHARED IMPORTED)
 set_property(TARGET libopendglab PROPERTY IMPORTED_LOCATION ${OPENDGLABCORE_LIB})
 target_link_libraries(OpenDGLab-Desktop PRIVATE Qt${QT_VERSION_MAJOR}::Widgets Qt${QT_VERSION_MAJOR}::Bluetooth libopendglab)
 

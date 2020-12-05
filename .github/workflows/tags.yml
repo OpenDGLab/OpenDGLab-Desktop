@@ -1,0 +1,76 @@
+name: Build Release
+on:
+  create:
+    tags:
+      - v*
+jobs:
+  create_release:
+    name: Create release
+    runs-on: ubuntu-latest
+    outputs:
+      upload_url: ${{ steps.create_release.outputs.upload_url }}
+      version: ${{ steps.get_version.outputs.version }}
+    steps:
+      - name: Get latest release version number
+        id: get_version
+        uses: battila7/get-version-action@v2
+      - name: Create Release
+        id: create_release
+        uses: actions/create-release@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          tag_name: ${{ github.ref }}
+          release_name: OpenDGLab Desktop ${{ steps.get_version.outputs.version }}
+          body: |
+            OpenDGLab Desktop ${{ steps.get_version.outputs.version }}
+          draft: false
+          prerelease: false
+  build:
+    strategy:
+      matrix:
+        qt_ver: [5.15.1]
+        os: [windows-latest]
+        qt_arch: [win64_msvc2019_64, win32_msvc2019]
+        include:
+          - qt_arch: win64_msvc2019_64
+            msvc_arch: x64
+            qt_arch_install: msvc2019_64
+          - qt_arch: win32_msvc2019
+            msvc_arch: x86
+            qt_arch_install: msvc2019
+    needs: [create_release]
+    runs-on: ${{ matrix.os }}
+    steps:
+      - name: Cache Qt
+        id: windows-cache-qt
+        uses: actions/cache@v1
+        with:
+          path: ../Qt/${{matrix.qt_ver}}/${{matrix.qt_arch_install}}
+          key: ${{ runner.os }}-Qt/${{matrix.qt_ver}}/${{matrix.qt_arch}}
+      - name: Install Qt
+        uses: jurplel/install-qt-action@v2.5.3
+        with:
+          version: ${{ matrix.qt_ver }}
+          target: ${{ matrix.qt_target }}
+          arch: ${{ matrix.qt_arch }}
+          cached: ${{steps.windows-cache-qt.outputs.cache-hit }}
+      - name: Checkout
+        uses: actions/checkout@v1
+      - name: Windows Build
+        shell: cmd
+        env:
+          vc_arch: ${{ matrix.msvc_arch }}
+        run: |
+          call "C:\Program Files (x86)\Microsoft Visual Studio\2019\Enterprise\VC\Auxiliary\Build\vcvarsall.bat" %vc_arch%
+          mkdir build
+          cd build
+          cmake ..
+          cmake --build . --target all
+          cd ..
+      - name: Check Build
+        shell: cmd
+        run: |
+          cd build
+          dir
+      
