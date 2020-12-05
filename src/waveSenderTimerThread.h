@@ -3,6 +3,7 @@
 
 #include <QObject>
 #include <QThread>
+#include <QTimer>
 class WaveSenderTimerThread : public QThread
 {
     Q_OBJECT

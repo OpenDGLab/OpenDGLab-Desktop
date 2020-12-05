@@ -2,6 +2,7 @@
 #define AUTOWAVECHANGERTHREAD_H
 
 #include <QThread>
+#include <QTimer>
 #include <QObject>
 
 class AutoWaveChangerThread : public QThread

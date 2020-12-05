@@ -116,3 +116,61 @@ jobs:
           asset_path: ./build/OpenDGLab-Desktop-x64.zip
           asset_name: OpenDGLab-Desktop-Windows-x64.zip
           asset_content_type: application/zip
+  build_linux:
+    strategy:
+      matrix:
+        qt_ver: [5.15.1]
+        os: [ubuntu-latest]
+    needs: [create_release]
+    runs-on: ${{ matrix.os }}
+    steps:
+      - name: Install Qt
+        uses: jurplel/install-qt-action@v2.11.1
+        with:
+          version: ${{ matrix.qt_ver }}
+      - name: Install Package...
+        run: |
+          sudo apt install unzip
+      - name: Checkout
+        uses: actions/checkout@v1
+      - name: Get OpenDGLab Core Linux x64
+        shell: bash
+        run: |
+          wget https://github.com/OpenDGLab/OpenDGLab-Core/releases/latest/download/OpenDGLab-Core-Linux-X64.zip
+          unzip OpenDGLab-Core-Linux-X64.zip -d OpenDGLab-Core-Unzipped
+          mkdir -p opendglab-core/header
+          mkdir -p opendglab-core/bin
+          cp OpenDGLab-Core-Unzipped/releaseShared/libopendglab_api.h opendglab-core/header/
+          cp OpenDGLab-Core-Unzipped/releaseShared/libopendglab.a opendglab-core/bin/
+      - name: Get latest CMake and ninja
+        uses: lukka/get-cmake@latest
+      - name: Linuz Build
+        shell: bash
+        run: |
+          mkdir build
+          cd build
+          cmake -DCMAKE_BUILD_TYPE=MinSizeRel ..
+          cmake --build . --target all
+          cd ..
+      - name: Packaging...
+        run: |
+          cd build
+          wget -O linuxdeployqt https://github.com/probonopd/linuxdeployqt/releases/download/latest/linuxdeployqt-7-x86_64.AppImage
+          chmod +x linuxdeployqt
+          mkdir appImage
+          cp ../external/OpenDGLab.desktop appImage/
+          cp ../res/OpenDGLab-Desktop.png appImage/OpenDGLab.png
+          cp OpenDGLab-Desktop appImage/
+          cd appImage
+          ../linuxdeployqt OpenDGLab-Desktop -appimage -unsupported-bundle-everything
+          mv *.AppImage OpenDGLab-Desktop-Linux-x86_64.AppImage
+          cd ../..
+      - name: Upload Release Asset Linux x64
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ needs.create_release.outputs.upload_url }}
+          asset_path: ./build/appImage/OpenDGLab-Desktop-Linux-x86_64.AppImage
+          asset_name: OpenDGLab-Desktop-Linux-x86_64.AppImage
+          asset_content_type: application/x-elf
