@@ -130,7 +130,7 @@ jobs:
           version: ${{ matrix.qt_ver }}
       - name: Install Package...
         run: |
-          sudo apt install unzip
+          sudo apt install -y unzip
       - name: Checkout
         uses: actions/checkout@v1
       - name: Get OpenDGLab Core Linux x64
