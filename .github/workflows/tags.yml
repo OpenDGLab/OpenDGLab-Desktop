@@ -26,7 +26,7 @@ jobs:
             OpenDGLab Desktop ${{ steps.get_version.outputs.version }}
           draft: false
           prerelease: false
-  build:
+  build_windows:
     strategy:
       matrix:
         qt_ver: [5.15.1]
@@ -106,7 +106,7 @@ jobs:
           asset_path: ./build/OpenDGLab-Desktop-x86.zip
           asset_name: OpenDGLab-Desktop-Windows-x86.zip
           asset_content_type: application/zip
-      - name: Upload Release Asset Windows x86
+      - name: Upload Release Asset Windows x64
         uses: actions/upload-release-asset@v1
         if: matrix.msvc_arch == 'x64'
         env:
