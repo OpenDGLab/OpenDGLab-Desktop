@@ -96,9 +96,23 @@ jobs:
           cmake -G "Ninja" -DCMAKE_BUILD_TYPE=MinSizeRel ..
           cmake --build . --target all
           cd ..
-      - name: Check Build
-        shell: cmd
-        run: |
-          cd build
-          dir
-      
+      - name: Upload Release Asset Windows x86
+        uses: actions/upload-release-asset@v1
+        if: matrix.msvc_arch == 'x86'
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ needs.create_release.outputs.upload_url }}
+          asset_path: ./build/OpenDGLab-Desktop-x86.zip
+          asset_name: OpenDGLab-Desktop-Windows-x86.zip
+          asset_content_type: application/zip
+      - name: Upload Release Asset Windows x86
+        uses: actions/upload-release-asset@v1
+        if: matrix.msvc_arch == 'x64'
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ needs.create_release.outputs.upload_url }}
+          asset_path: ./build/OpenDGLab-Desktop-x64.zip
+          asset_name: OpenDGLab-Desktop-Windows-x64.zip
+          asset_content_type: application/zip
