@@ -15,18 +15,27 @@ OpenDGLab Desktop 的目标是在 Windows、Linux、MacOS 上提供对多 DG-Lab
 
 > 注： Linux 和 MacOS 编译尚未测试。 Comming Soon...
 
-### 编译 OpenDGLab Desktop
-使用 CMake 编译即可  
+### 编译 OpenDGLab Desktop (Windows)
 
 ```shell
 mkdir build
 cd build
-cmake ..
-make
-make install
+cmake -G "Ninja" -DCMAKE_BUILD_TYPE=MinSizeRel ..
+cmake --build . --target all
 ```
 
-Windows 版本将自动生成 zip 压缩包，Linux 版本将自动生成 AppImage 单执行文件(Linux 版本尚未测试)，MacOS 因为开发组设备原因暂时无法测试与编写。
+在 Build 文件夹下可以找到编译好的对应版本的 zip 压缩文件。
+
+### 编译 OpenDGLab Desktop (Linux)
+即将完成...
+
+### 编译 OpenDGLab Desktop (MacOS)
+暂时无法测试
+
+## 注意
+经过一些测试开发组发现如下问题。  
+ * CSR 高通芯片方案的蓝牙模块似乎不支持 BLE，您可能遇到无法搜索到 DG-Lab 设备的问题。  
+ * ASUS PCE-AC58BT 因为未知原因工作不良，目前无法确定是硬件问题还是网卡固件问题。您可能会遇到长时间无法搜索到 DG-Lab 设备的问题，或者搜索到后需要很长时间才能连接和完成配置。甚至遭遇 OpenDGLab Desktop 应用程序崩溃（这是由于您的网卡蓝牙没有正常返回探索服务指令导致的）。  
 
 ## 声明
 使用本程序请遵循 DG-Lab 官方安全声明使用。使用 OpenDGLab 项目，视同于您自己承担相关非官方实现风险。OpenDGLab 开源项目组不为您使用 DG-Lab 设备出现的任何问题负责。
