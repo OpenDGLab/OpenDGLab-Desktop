@@ -4,26 +4,26 @@ on:
     tags:
       - v*
 jobs:
-  create_release_windows:
-    name: Create release windows
+  create_release:
+    name: Create release
     runs-on: ubuntu-latest
     outputs:
-      upload_url: ${{ steps.create_release_windows.outputs.upload_url }}
+      upload_url: ${{ steps.create_release.outputs.upload_url }}
       version: ${{ steps.get_version.outputs.version }}
     steps:
       - name: Get latest release version number
         id: get_version
         uses: battila7/get-version-action@v2
       - name: Create Release
-        id: create_release_windows
+        id: create_release
         uses: actions/create-release@v1
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
           tag_name: ${{ github.ref }}
-          release_name: OpenDGLab Desktop Windows ${{ steps.get_version.outputs.version }}
+          release_name: OpenDGLab Desktop ${{ steps.get_version.outputs.version }}
           body: |
-            OpenDGLab Desktop Windows ${{ steps.get_version.outputs.version }}
+            OpenDGLab Desktop ${{ steps.get_version.outputs.version }}
           draft: false
           prerelease: false
   build:
@@ -40,7 +40,7 @@ jobs:
           - qt_arch: win32_msvc2019
             msvc_arch: x86
             qt_arch_install: msvc2019
-    needs: [create_release_windows]
+    needs: [create_release]
     runs-on: ${{ matrix.os }}
     steps:
       - name: Cache Qt
@@ -80,6 +80,10 @@ jobs:
           Copy-Item -Path "OpenDGLab-Core-Unzipped/releaseShared/libopendglab_api.h" -Destination "OpenDGLab-Core/header/"
           Copy-Item -Path "OpenDGLab-Core-Unzipped/releaseShared/libopendglab.dll" -Destination "OpenDGLab-Core/bin/"
           Copy-Item -Path "OpenDGLab-Core-Unzipped/releaseShared/libopendglab.def" -Destination "OpenDGLab-Core/bin/"
+      - name: Setup Ninja
+        uses: ashutoshvarma/setup-ninja@master
+        with:
+          version: 1.10.0
       - name: Windows Build
         shell: cmd
         env:
@@ -91,7 +95,7 @@ jobs:
           cd ../..
           mkdir build
           cd build
-          cmake ..
+          cmake -G "Ninja" ..
           cmake --build . --target all
           cd ..
       - name: Check Build
