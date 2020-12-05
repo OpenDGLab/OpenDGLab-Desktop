@@ -36,6 +36,17 @@ cmake --build . --target all
 ```
 编译后会生成 OpenDGLab-Desktop 可执行文件，您需要使用 `sudo setcap CAP_NET_ADMIN+ep OpenDGLab-Desktop` 和 `chmod +x OpenDGLab-Desktop` 来对其添加权限。
 
+如果需要生成 AppImage 则运行
+```shell
+mkdir appImage
+cp ../external/OpenDGLab.desktop appImage/
+cp ../res/OpenDGLab-Desktop.png appImage/OpenDGLab.png
+cp OpenDGLab-Desktop appImage/
+cd appImage
+../linuxdeployqt OpenDGLab-Desktop -appimage -unsupported-bundle-everything
+```
+即可完成打包操作，请注意 AppImage 不能设置 Cap，如需运行请使用 `gksu` 或 `kdesu` 来运行。
+
 ### 编译 OpenDGLab Desktop (MacOS)
 暂时无法测试
 
