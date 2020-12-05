@@ -144,7 +144,7 @@ jobs:
           cp OpenDGLab-Core-Unzipped/releaseStatic/libopendglab.a opendglab-core/bin/
       - name: Get latest CMake and ninja
         uses: lukka/get-cmake@latest
-      - name: Linuz Build
+      - name: Linux Build
         shell: bash
         run: |
           mkdir build
@@ -155,7 +155,7 @@ jobs:
       - name: Packaging...
         run: |
           cd build
-          wget -O linuxdeployqt https://github.com/probonopd/linuxdeployqt/releases/download/latest/linuxdeployqt-7-x86_64.AppImage
+          wget -O linuxdeployqt https://github.com/probonopd/linuxdeployqt/releases/latest/download/linuxdeployqt-7-x86_64.AppImage
           chmod +x linuxdeployqt
           mkdir appImage
           cp ../external/OpenDGLab.desktop appImage/
