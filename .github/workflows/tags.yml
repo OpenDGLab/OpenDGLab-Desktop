@@ -80,10 +80,8 @@ jobs:
           Copy-Item -Path "OpenDGLab-Core-Unzipped/releaseShared/libopendglab_api.h" -Destination "OpenDGLab-Core/header/"
           Copy-Item -Path "OpenDGLab-Core-Unzipped/releaseShared/libopendglab.dll" -Destination "OpenDGLab-Core/bin/"
           Copy-Item -Path "OpenDGLab-Core-Unzipped/releaseShared/libopendglab.def" -Destination "OpenDGLab-Core/bin/"
-      - name: Setup Ninja
-        uses: ashutoshvarma/setup-ninja@master
-        with:
-          version: 1.10.0
+      - name: Get latest CMake and ninja
+        uses: lukka/get-cmake@latest
       - name: Windows Build
         shell: cmd
         env:
