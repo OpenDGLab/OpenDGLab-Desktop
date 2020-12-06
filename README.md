@@ -13,7 +13,7 @@ OpenDGLab Desktop 的目标是在 Windows、Linux、MacOS 上提供对多 DG-Lab
 注意：Windows 编译请使用 `lib /def:libopendglab.def /out:libopendglab.lib /machine:x64` 或 `lib /def:libopendglab.def /out:libopendglab.lib /machine:x86` 获取对应的 .lib 文件。  
 将 dll lib so dylib 文件放入 `opendglab-core/bin` 文件夹中，将 h 头文件放入 `opendglab-core/header` 文件夹中。  
 
-> 注： Linux 和 MacOS 编译尚未测试。 Comming Soon...
+> 注： MacOS 编译尚未测试。 Comming Soon...
 
 ### 编译 OpenDGLab Desktop (Windows)
 

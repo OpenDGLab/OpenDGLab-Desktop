@@ -174,3 +174,53 @@ jobs:
           asset_path: ./build/appImage/OpenDGLab-Desktop-Linux-x86_64.AppImage
           asset_name: OpenDGLab-Desktop-Linux-x86_64.AppImage
           asset_content_type: application/x-elf
+  build_macos:
+    strategy:
+      matrix:
+        qt_ver: [5.15.1]
+        os: [macos-latest]
+    needs: [create_release]
+    runs-on: ${{ matrix.os }}
+    steps:
+      - name: Install Qt
+        uses: jurplel/install-qt-action@v2.11.1
+        with:
+          version: ${{ matrix.qt_ver }}
+      - name: Install Package...
+        run: |
+          sudo brew install unzip
+      - name: Checkout
+        uses: actions/checkout@v1
+      - name: Get OpenDGLab Core MacOS x64
+        shell: bash
+        run: |
+          wget https://github.com/OpenDGLab/OpenDGLab-Core/releases/latest/download/OpenDGLab-Core-MacOS-X64.zip
+          unzip OpenDGLab-Core-MacOS-X64.zip -d OpenDGLab-Core-Unzipped
+          mkdir -p opendglab-core/header
+          mkdir -p opendglab-core/bin
+          cp OpenDGLab-Core-Unzipped/releaseStatic/libopendglab_api.h opendglab-core/header/
+          cp OpenDGLab-Core-Unzipped/releaseStatic/libopendglab.a opendglab-core/bin/
+      - name: Get latest CMake and ninja
+        uses: lukka/get-cmake@latest
+      - name: MacOS Build
+        shell: bash
+        run: |
+          mkdir build
+          cd build
+          cmake -DCMAKE_BUILD_TYPE=MinSizeRel ..
+          cmake --build . --target all
+          cd ..
+      - name: Packaging...
+        run: |
+          cd build
+          macdeployqt OpenDGLab-Desktop.app -dmg
+          cd ..
+      - name: Upload Release Asset MacOS x64
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ needs.create_release.outputs.upload_url }}
+          asset_path: ./build/appImage/OpenDGLab-Desktop.dmg
+          asset_name: OpenDGLab-Desktop-MacOS-x64.dmg
+          asset_content_type: application/octet-stream
