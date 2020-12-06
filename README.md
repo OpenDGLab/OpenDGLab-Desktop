@@ -8,14 +8,11 @@ OpenDGLab Desktop 的目标是在 Windows、Linux、MacOS 上提供对多 DG-Lab
 
 ## 编译
 ### 获取 OpenDGLab Core
-下载并编译 OpenDGLab Core 获取您即将编译版本的 dll so 或 dylib 文件。  
-并同时获取对应 .h 头文件。  
-注意：Windows 编译请使用 `lib /def:libopendglab.def /out:libopendglab.lib /machine:x64` 或 `lib /def:libopendglab.def /out:libopendglab.lib /machine:x86` 获取对应的 .lib 文件。  
-将 dll lib so dylib 文件放入 `opendglab-core/bin` 文件夹中，将 h 头文件放入 `opendglab-core/header` 文件夹中。  
-
-> 注： MacOS 编译尚未测试。 Comming Soon...
+下载并编译 OpenDGLab Core 获取您对应架构的 Core 文件。  
 
 ### 编译 OpenDGLab Desktop (Windows)
+Windows 编译请使用 `lib /def:libopendglab.def /out:libopendglab.lib /machine:x64` 或 `lib /def:libopendglab.def /out:libopendglab.lib /machine:x86` 获取对应的 .lib 文件。  
+将 lib dll 文件放入 opendglab-core/bin 文件夹，将 h 文件放入 opendglab-core/header 文件夹。  
 
 ```shell
 mkdir build
@@ -27,6 +24,7 @@ cmake --build . --target all
 在 Build 文件夹下可以找到编译好的对应版本的 zip 压缩文件。
 
 ### 编译 OpenDGLab Desktop (Linux)
+将 OpenDGLab-Core 编译出的 a 文件放入 opendglab-core/bin 文件夹，将 h 文件放入 opendglab-core/header 文件夹。  
 如果需要打包未 AppImage 请安装 linuxdeployqt
 ```shell
 mkdir build
@@ -48,7 +46,15 @@ cd appImage
 即可完成打包操作，请注意 AppImage 不能设置 Cap，如需运行请使用 `gksu` 或 `kdesu` 来运行。
 
 ### 编译 OpenDGLab Desktop (MacOS)
-暂时无法测试
+将 OpenDGLab-Core 编译出的 a 文件放入 opendglab-core/bin 文件夹，将 h 文件放入 opendglab-core/header 文件夹。   
+```shell
+mkdir build
+cd build
+cmake -DCMAKE_BUILD_TYPE=MinSizeRel ..
+cmake --build . --target all
+macdeployqt OpenDGLab-Desktop.app -dmg
+```
+即可生成 OpenDGLab-Desktop.dmg 文件。
 
 ## 注意
 经过一些测试开发组发现如下问题。  
