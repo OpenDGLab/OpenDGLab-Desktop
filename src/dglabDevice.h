@@ -9,6 +9,7 @@
 #include <QLowEnergyController>
 #include <QLowEnergyService>
 #include <QCryptographicHash>
+#include <QRecursiveMutex>
 #include "deviceItem.h"
 #include "deviceOperator.h"
 #include "waveSenderTimerThread.h"
@@ -30,6 +31,15 @@ public:
     void stopGlobalBoost();
     DeviceStateEnum::DeviceState getState();
 
+    void clearCustomWaveAPI(DeviceStateEnum::DeviceChannel);
+    void addCustomWaveAPI(DeviceStateEnum::DeviceChannel, QByteArray);
+    QString getWaveAPI(DeviceStateEnum::DeviceChannel);
+    void setWaveAPI(DeviceStateEnum::DeviceChannel, QString);
+    int getStrengthAPI(DeviceStateEnum::DeviceChannel);
+    void setStrengthAPI(DeviceStateEnum::DeviceChannel, int);
+    void setDeviceRemoteLocked(bool);
+    bool getDeviceRemoteLocked();
+
 private:
     QBluetoothDeviceInfo deviceInfo;
     QString id;
@@ -40,6 +50,10 @@ private:
     libopendglab_kref_OpenDGLab openDgLab;
     DeviceItem* uiDeviceItem;
     DeviceOperator* uiDeviceOperator;
+    QRecursiveMutex customWaveAMutex;
+    QRecursiveMutex customWaveBMutex;
+    QList<QByteArray> customWaveA;
+    QList<QByteArray> customWaveB;
     bool shownOnUi = false;
     WaveSenderTimerThread* waveSenderTimerThread;
     int powerA = 0;
@@ -47,6 +61,7 @@ private:
     int boostA = 0;
     int boostB = 0;
     int globalBoost = 0;
+    bool remoteLocked = false;
 
 public slots:
     void waveSender();
@@ -55,6 +70,7 @@ public slots:
     void stopChannelBoost(DeviceStateEnum::DeviceChannel, int boost);
 
 private slots:
+    void changePower(int, int);
     void deviceConnected();
     void deviceDisconnected();
     void deviceServiceDiscoverFinished();

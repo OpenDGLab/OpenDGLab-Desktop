@@ -17,6 +17,10 @@ public:
     ~DeviceOperator() override;
     QString getWaveA();
     QString getWaveB();
+    void setWaveA(QString);
+    void setWaveB(QString);
+    void setAutoChange(DeviceStateEnum::DeviceChannel, bool);
+    bool getAutoChange(DeviceStateEnum::DeviceChannel);
     void checkIfNeedChangeWave();
 
 public slots:

@@ -87,4 +87,13 @@ namespace Global {
         libopendglab->DisposeString(waveBCharacterisitc);
 
     }
+
+    QList<QString> getWaveList()
+    {
+        QList<QString> list;
+        list.append(basicWaveNameList);
+        list.append(touchWaveNameList);
+        return list;
+    }
+
 }

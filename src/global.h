@@ -46,6 +46,7 @@ namespace Global {
     extern QBluetoothDeviceDiscoveryAgent *bleScanAgent;
     extern QMutex mutex;
     void initGlobal();
+    QList<QString> getWaveList();
 }
 
 #endif // GLOBAL_H

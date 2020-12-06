@@ -106,6 +106,17 @@ QString DeviceOperator::getWaveB()
     return ui->cb_b_wave->currentText();
 }
 
+void DeviceOperator::setWaveA(QString str) {
+    if (ui->cb_a_wave->findText(str) >= 0) {
+        ui->cb_a_wave->setCurrentText(str);
+    }
+}
+void DeviceOperator::setWaveB(QString str) {
+    if (ui->cb_b_wave->findText(str) >= 0) {
+        ui->cb_b_wave->setCurrentText(str);
+    }
+}
+
 void DeviceOperator::checkIfNeedChangeWave()
 {
     if (ui->chk_a_auto->isChecked()) {
@@ -134,5 +145,23 @@ void DeviceOperator::setPower(DeviceStateEnum::DeviceChannel channel, int level)
     case DeviceStateEnum::DeviceChannel::CHANNEL_B:
         ui->lcd_b_strength->display(level);
         break;
+    }
+}
+void DeviceOperator::setAutoChange(DeviceStateEnum::DeviceChannel channel, bool autoChange) {
+    switch (channel) {
+    case DeviceStateEnum::DeviceChannel::CHANNEL_A:
+        ui->chk_a_auto->setChecked(autoChange);
+        break;
+    case DeviceStateEnum::DeviceChannel::CHANNEL_B:
+        ui->chk_b_auto->setChecked(autoChange);
+        break;
+    }
+}
+bool DeviceOperator::getAutoChange(DeviceStateEnum::DeviceChannel channel) {
+    switch (channel) {
+    case DeviceStateEnum::DeviceChannel::CHANNEL_A:
+        return ui->chk_a_auto->isChecked();
+    case DeviceStateEnum::DeviceChannel::CHANNEL_B:
+        return ui->chk_b_auto->isChecked();
     }
 }

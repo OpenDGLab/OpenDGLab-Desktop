@@ -110,6 +110,12 @@ void DGLabDevice::waveSender()
             auto hasWave = libopendglab->kotlin.root.WaveCenter.toDGWaveGen(waveCenterA);
             if (QString::fromUtf8(hasWave) == "") {
                 //Custom Send
+                QMutexLocker locker(&customWaveAMutex);
+                if (!customWaveA.isEmpty()) {
+                    auto qBytes = customWaveA.takeFirst();
+                    const QLowEnergyCharacteristic wave = eStimService->characteristic(QBluetoothUuid(QUuid(Global::DGLabServices::EStimStatus::Characteristic::waveA)));
+                    eStimService->writeCharacteristic(wave, qBytes, QLowEnergyService::WriteWithoutResponse);
+                }
             } else {
                 auto waveBytes = libopendglab->kotlin.root.WaveCenter.waveTick(waveCenterA);
                 auto waveBytesSize = libopendglab->kotlin.root.getByteArraySize(waveBytes);
@@ -119,13 +125,25 @@ void DGLabDevice::waveSender()
                 eStimService->writeCharacteristic(wave, qBytes, QLowEnergyService::WriteWithoutResponse);
             }
             libopendglab->DisposeString(hasWave);
+        } else {
+            auto waveCenterA = libopendglab->kotlin.root.OpenDGLab.EStimStatus.Wave.getWaveCenterA(wave);
+            auto hasWave = libopendglab->kotlin.root.WaveCenter.toDGWaveGen(waveCenterA);
+            if (QString::fromUtf8(hasWave) == "") {
+                QMutexLocker locker(&customWaveAMutex);
+                if (!customWaveA.isEmpty()) customWaveA.empty();
+            }
         }
         if (powerB > 0){
             //WaveB
             auto waveCenterB = libopendglab->kotlin.root.OpenDGLab.EStimStatus.Wave.getWaveCenterB(wave);
             auto hasWave = libopendglab->kotlin.root.WaveCenter.toDGWaveGen(waveCenterB);
             if (QString::fromUtf8(hasWave) == "") {
-                //Custom Send
+                QMutexLocker locker(&customWaveBMutex);
+                if (!customWaveB.isEmpty()) {
+                    auto qBytes = customWaveB.takeFirst();
+                    const QLowEnergyCharacteristic wave = eStimService->characteristic(QBluetoothUuid(QUuid(Global::DGLabServices::EStimStatus::Characteristic::waveB)));
+                    eStimService->writeCharacteristic(wave, qBytes, QLowEnergyService::WriteWithoutResponse);
+                }
             } else {
                 auto waveBytes = libopendglab->kotlin.root.WaveCenter.waveTick(waveCenterB);
                 auto waveBytesSize = libopendglab->kotlin.root.getByteArraySize(waveBytes);
@@ -135,6 +153,13 @@ void DGLabDevice::waveSender()
                 eStimService->writeCharacteristic(wave, qBytes, QLowEnergyService::WriteWithoutResponse);
             }
             libopendglab->DisposeString(hasWave);
+        } else {
+            auto waveCenterB = libopendglab->kotlin.root.OpenDGLab.EStimStatus.Wave.getWaveCenterB(wave);
+            auto hasWave = libopendglab->kotlin.root.WaveCenter.toDGWaveGen(waveCenterB);
+            if (QString::fromUtf8(hasWave) == "") {
+                QMutexLocker locker(&customWaveBMutex);
+                if (!customWaveB.isEmpty()) customWaveB.empty();
+            }
         }
     }
 }
@@ -282,6 +307,9 @@ void DGLabDevice::deviceDisconnected()
         uiDeviceItem->changeBattery(0);
         uiDeviceItem->update();
     }
+    remoteLocked = false;
+    uiDeviceOperator->setAutoChange(DeviceStateEnum::DeviceChannel::CHANNEL_A, false);
+    uiDeviceOperator->setAutoChange(DeviceStateEnum::DeviceChannel::CHANNEL_B, false);
 }
 void DGLabDevice::deviceServiceDiscoverFinished()
 {
@@ -309,22 +337,23 @@ void DGLabDevice::deviceServiceDiscoverFinished()
     });
 
     //Connect UI Event
-    connect(uiDeviceOperator, &DeviceOperator::changePower, [this](int levelA, int levelB){
-        if (levelA < 0) levelA = 0;
-        if (levelB < 0) levelB = 0;
-        if (levelA > 274) levelA = 274;
-        if (levelB > 274) levelB = 274;
-        const QLowEnergyCharacteristic abpower = eStimService->characteristic(QBluetoothUuid(QUuid(Global::DGLabServices::EStimStatus::Characteristic::abpower)));
-        libopendglab_ExportedSymbols* libopendglab = libopendglab_symbols();
-        auto eStim = libopendglab->kotlin.root.OpenDGLab.get_eStimStatus(openDgLab);
-        auto power = libopendglab->kotlin.root.OpenDGLab.EStimStatus.get_abPower(eStim);
-        auto dataKt = libopendglab->kotlin.root.OpenDGLab.EStimStatus.ABPower.setABPower(power, levelA, levelB);
-        auto dataBytes = libopendglab->kotlin.root.OpenDGLab.WriteBLE.get_data(dataKt);
-        auto dataSize = libopendglab->kotlin.root.getByteArraySize(dataBytes);
-        auto data = QByteArray(dataSize, Qt::Initialization::Uninitialized);
-        libopendglab->kotlin.root.toNativeByteArray(data.data(), dataBytes);
-        eStimService->writeCharacteristic(abpower, data, QLowEnergyService::WriteWithoutResponse);
-    });
+    connect(uiDeviceOperator, &DeviceOperator::changePower, this, &DGLabDevice::changePower);
+}
+void DGLabDevice::changePower(int levelA, int levelB) {
+    if (levelA < 0) levelA = 0;
+    if (levelB < 0) levelB = 0;
+    if (levelA > 274) levelA = 274;
+    if (levelB > 274) levelB = 274;
+    const QLowEnergyCharacteristic abpower = eStimService->characteristic(QBluetoothUuid(QUuid(Global::DGLabServices::EStimStatus::Characteristic::abpower)));
+    libopendglab_ExportedSymbols* libopendglab = libopendglab_symbols();
+    auto eStim = libopendglab->kotlin.root.OpenDGLab.get_eStimStatus(openDgLab);
+    auto power = libopendglab->kotlin.root.OpenDGLab.EStimStatus.get_abPower(eStim);
+    auto dataKt = libopendglab->kotlin.root.OpenDGLab.EStimStatus.ABPower.setABPower(power, levelA, levelB);
+    auto dataBytes = libopendglab->kotlin.root.OpenDGLab.WriteBLE.get_data(dataKt);
+    auto dataSize = libopendglab->kotlin.root.getByteArraySize(dataBytes);
+    auto data = QByteArray(dataSize, Qt::Initialization::Uninitialized);
+    libopendglab->kotlin.root.toNativeByteArray(data.data(), dataBytes);
+    eStimService->writeCharacteristic(abpower, data, QLowEnergyService::WriteWithoutResponse);
 }
 void DGLabDevice::deviceBatteryServiceStateChanged(QLowEnergyService::ServiceState state){
     if (!batteryService) return;
@@ -447,4 +476,110 @@ void DGLabDevice::deviceEStimCharacteristicArrived(const QLowEnergyCharacteristi
         emit powerUpdate(DeviceStateEnum::DeviceChannel::CHANNEL_A, powerA);
         emit powerUpdate(DeviceStateEnum::DeviceChannel::CHANNEL_B, powerB);
     }
+}
+
+
+void DGLabDevice::clearCustomWaveAPI(DeviceStateEnum::DeviceChannel channel) {
+    switch (channel) {
+    case DeviceStateEnum::DeviceChannel::CHANNEL_A:
+    {
+        QMutexLocker locker(&customWaveAMutex);
+        customWaveA.empty();
+    }
+        break;
+    case DeviceStateEnum::DeviceChannel::CHANNEL_B:
+    {
+        QMutexLocker locker(&customWaveBMutex);
+        customWaveB.empty();
+    }
+        break;
+    }
+}
+void DGLabDevice::addCustomWaveAPI(DeviceStateEnum::DeviceChannel channel, QByteArray qbytes) {
+    switch (channel) {
+    case DeviceStateEnum::DeviceChannel::CHANNEL_A:
+    {
+        QMutexLocker locker(&customWaveAMutex);
+        customWaveA.push_back(qbytes);
+    }
+        break;
+    case DeviceStateEnum::DeviceChannel::CHANNEL_B:
+    {
+        QMutexLocker locker(&customWaveBMutex);
+        customWaveB.push_back(qbytes);
+    }
+        break;
+    }
+}
+QString DGLabDevice::getWaveAPI(DeviceStateEnum::DeviceChannel channel) {
+    switch (channel) {
+    case DeviceStateEnum::DeviceChannel::CHANNEL_A:
+    {
+        return uiDeviceOperator->getWaveA();
+    }
+        break;
+    case DeviceStateEnum::DeviceChannel::CHANNEL_B:
+    {
+
+        return uiDeviceOperator->getWaveB();
+    }
+        break;
+    }
+}
+void DGLabDevice::setWaveAPI(DeviceStateEnum::DeviceChannel channel, QString str) {
+    QString wave;
+    if (Global::basicWaveNameList.indexOf(str) >= 0 || Global::touchWaveNameList.indexOf(str) >= 0) {
+        wave = str;
+    } else {
+        wave = "外部输入";
+    }
+    switch (channel) {
+    case DeviceStateEnum::DeviceChannel::CHANNEL_A:
+    {
+        uiDeviceOperator->setWaveA(wave);
+    }
+        break;
+    case DeviceStateEnum::DeviceChannel::CHANNEL_B:
+    {
+
+        uiDeviceOperator->setWaveB(wave);
+    }
+        break;
+    }
+}
+int DGLabDevice::getStrengthAPI(DeviceStateEnum::DeviceChannel channel) {
+    switch (channel) {
+    case DeviceStateEnum::DeviceChannel::CHANNEL_A:
+        return powerA;
+    case DeviceStateEnum::DeviceChannel::CHANNEL_B:
+        return powerB;
+    }
+}
+void DGLabDevice::setStrengthAPI(DeviceStateEnum::DeviceChannel channel, int level) {
+    switch (channel) {
+    case DeviceStateEnum::DeviceChannel::CHANNEL_A:
+        changePower(level, powerB);
+        break;
+    case DeviceStateEnum::DeviceChannel::CHANNEL_B:
+        changePower(powerA, level);
+        break;
+    }
+}
+void DGLabDevice::setDeviceRemoteLocked(bool lock) {
+    remoteLocked = lock;
+    if (remoteLocked) {
+        uiDeviceOperator->setAutoChange(DeviceStateEnum::DeviceChannel::CHANNEL_A, false);
+        uiDeviceOperator->setAutoChange(DeviceStateEnum::DeviceChannel::CHANNEL_B, false);
+        uiDeviceItem->changeState(DeviceStateEnum::DeviceState::READY_REMOTEMANAGED);
+    } else {
+        if (controller->state() == QLowEnergyController::UnconnectedState) {
+            uiDeviceItem->changeState(DeviceStateEnum::DeviceState::UNCONNECTED);
+        } else {
+            uiDeviceItem->changeState(DeviceStateEnum::DeviceState::READY);
+        }
+    }
+}
+bool DGLabDevice::getDeviceRemoteLocked()
+{
+    return remoteLocked;
 }
