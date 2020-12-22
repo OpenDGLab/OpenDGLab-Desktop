@@ -36,7 +36,7 @@ public:
     QString getWaveAPI(DeviceStateEnum::DeviceChannel);
     void setWaveAPI(DeviceStateEnum::DeviceChannel, QString);
     int getStrengthAPI(DeviceStateEnum::DeviceChannel);
-    void setStrengthAPI(DeviceStateEnum::DeviceChannel, int);
+    void setStrengthAPI(int, int);
     void setDeviceRemoteLocked(bool);
     bool getDeviceRemoteLocked();
 

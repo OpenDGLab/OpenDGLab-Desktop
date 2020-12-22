@@ -24,8 +24,10 @@ namespace Global {
     }
     bool skipError = false;
     bool skipWarning = false;
+    Remote *remote = new Remote();
     QMutex mutex;
     QList<DGLabDevice*> dglabList;
+    QList<RemoteClient*> remoteList;
     QBluetoothDeviceDiscoveryAgent *bleScanAgent;
     void initGlobal() {
         bleScanAgent = new QBluetoothDeviceDiscoveryAgent();

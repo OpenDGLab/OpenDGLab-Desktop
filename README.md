@@ -2,13 +2,15 @@
 OpenDGLab Desktop 是一个使用 OpenDGLab Core 和 Qt5 编写的桌面客户端。  
 OpenDGLab Desktop 的目标是在 Windows、Linux、MacOS 上提供对多 DG-Lab 设备的统一化支持。  
 使用 OpenDGLab Desktop 您可以在支持蓝牙 BLE 的电脑上同时管理多个 DG-Lab 设备。给您更加优质的使用体验。  
-
-## 尚未实现的功能
- * 远程 API
+支持 OpenDGLab OpenProtocol 协议，允许第三方程序接入。提供更多可能。
 
 ## 编译
-### 获取 OpenDGLab Core
-下载并编译 OpenDGLab Core 获取您对应架构的 Core 文件。  
+### 获取 OpenDGLab 必要文件
+下载并编译 OpenDGLab Core 获取您对应架构的 Core 文件。 
+
+从 OpenDGLab OpenProtocol 获取 app.proto 文件放入 proto 文件夹中。  
+
+依赖 libprotobuf 请事先安装。
 
 ### 编译 OpenDGLab Desktop (Windows)
 Windows 编译请使用 `lib /def:libopendglab.def /out:libopendglab.lib /machine:x64` 或 `lib /def:libopendglab.def /out:libopendglab.lib /machine:x86` 获取对应的 .lib 文件。  

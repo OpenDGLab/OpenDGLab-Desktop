@@ -307,6 +307,12 @@ void DGLabDevice::deviceDisconnected()
         uiDeviceItem->changeBattery(0);
         uiDeviceItem->update();
     }
+    if (remoteLocked) {
+        // 通知锁定客户端设备已经释放
+        for (auto r: Global::remoteList) {
+            r->sendDeviceReset(getID());
+        }
+    }
     remoteLocked = false;
     uiDeviceOperator->setAutoChange(DeviceStateEnum::DeviceChannel::CHANNEL_A, false);
     uiDeviceOperator->setAutoChange(DeviceStateEnum::DeviceChannel::CHANNEL_B, false);
@@ -318,17 +324,17 @@ void DGLabDevice::deviceServiceDiscoverFinished()
         qDebug() << "Not Found Battery Service";
         return;
     }
-    connect(batteryService, static_cast<void(QLowEnergyService::*)(QLowEnergyService::ServiceState)>(&QLowEnergyService::stateChanged), this, &DGLabDevice::deviceBatteryServiceStateChanged);
-    connect(batteryService, static_cast<void(QLowEnergyService::*)(const QLowEnergyCharacteristic&, const QByteArray &)>(&QLowEnergyService::characteristicChanged), this, &DGLabDevice::deviceBatteryCharacteristicArrived);
-    connect(batteryService, static_cast<void(QLowEnergyService::*)(const QLowEnergyCharacteristic&, const QByteArray &)>(&QLowEnergyService::characteristicRead), this, &DGLabDevice::deviceBatteryCharacteristicArrived);
+    connect(batteryService, qOverload<QLowEnergyService::ServiceState>(&QLowEnergyService::stateChanged), this, &DGLabDevice::deviceBatteryServiceStateChanged);
+    connect(batteryService, qOverload<const QLowEnergyCharacteristic&, const QByteArray &>(&QLowEnergyService::characteristicChanged), this, &DGLabDevice::deviceBatteryCharacteristicArrived);
+    connect(batteryService, qOverload<const QLowEnergyCharacteristic&, const QByteArray &>(&QLowEnergyService::characteristicRead), this, &DGLabDevice::deviceBatteryCharacteristicArrived);
     eStimService = controller->createServiceObject(QBluetoothUuid(QUuid(Global::DGLabServices::EStimStatus::service)),this);
     if (!eStimService) {
         qDebug() << "Not Found EStim Service";
         return;
     }
-    connect(eStimService, static_cast<void(QLowEnergyService::*)(QLowEnergyService::ServiceState)>(&QLowEnergyService::stateChanged), this, &DGLabDevice::deviceEStimServiceStateChanged);
-    connect(eStimService, static_cast<void(QLowEnergyService::*)(const QLowEnergyCharacteristic&, const QByteArray &)>(&QLowEnergyService::characteristicChanged), this, &DGLabDevice::deviceEStimCharacteristicArrived);
-    connect(eStimService, static_cast<void(QLowEnergyService::*)(const QLowEnergyCharacteristic&, const QByteArray &)>(&QLowEnergyService::characteristicRead), this, &DGLabDevice::deviceEStimCharacteristicArrived);
+    connect(eStimService, qOverload<QLowEnergyService::ServiceState>(&QLowEnergyService::stateChanged), this, &DGLabDevice::deviceEStimServiceStateChanged);
+    connect(eStimService, qOverload<const QLowEnergyCharacteristic&, const QByteArray &>(&QLowEnergyService::characteristicChanged), this, &DGLabDevice::deviceEStimCharacteristicArrived);
+    connect(eStimService, qOverload<const QLowEnergyCharacteristic&, const QByteArray &>(&QLowEnergyService::characteristicRead), this, &DGLabDevice::deviceEStimCharacteristicArrived);
 
     //Qt BLE Bug Workaround https://bugreports.qt.io/browse/QTBUG-78488
     QTimer::singleShot(0, [this] () {
@@ -475,6 +481,12 @@ void DGLabDevice::deviceEStimCharacteristicArrived(const QLowEnergyCharacteristi
         powerB = bPower;
         emit powerUpdate(DeviceStateEnum::DeviceChannel::CHANNEL_A, powerA);
         emit powerUpdate(DeviceStateEnum::DeviceChannel::CHANNEL_B, powerB);
+        if (remoteLocked) {
+            // 通知锁定客户端设备更新
+            for (auto r: Global::remoteList) {
+                r->sendPowerUpdate(getID(), powerA, powerB);
+            }
+        }
     }
 }
 
@@ -514,17 +526,11 @@ void DGLabDevice::addCustomWaveAPI(DeviceStateEnum::DeviceChannel channel, QByte
 QString DGLabDevice::getWaveAPI(DeviceStateEnum::DeviceChannel channel) {
     switch (channel) {
     case DeviceStateEnum::DeviceChannel::CHANNEL_A:
-    {
         return uiDeviceOperator->getWaveA();
-    }
-        break;
     case DeviceStateEnum::DeviceChannel::CHANNEL_B:
-    {
-
         return uiDeviceOperator->getWaveB();
     }
-        break;
-    }
+    return false;
 }
 void DGLabDevice::setWaveAPI(DeviceStateEnum::DeviceChannel channel, QString str) {
     QString wave;
@@ -554,16 +560,10 @@ int DGLabDevice::getStrengthAPI(DeviceStateEnum::DeviceChannel channel) {
     case DeviceStateEnum::DeviceChannel::CHANNEL_B:
         return powerB;
     }
+    return false;
 }
-void DGLabDevice::setStrengthAPI(DeviceStateEnum::DeviceChannel channel, int level) {
-    switch (channel) {
-    case DeviceStateEnum::DeviceChannel::CHANNEL_A:
-        changePower(level, powerB);
-        break;
-    case DeviceStateEnum::DeviceChannel::CHANNEL_B:
-        changePower(powerA, level);
-        break;
-    }
+void DGLabDevice::setStrengthAPI(int level_A, int level_B) {
+    changePower(level_A, level_B);
 }
 void DGLabDevice::setDeviceRemoteLocked(bool lock) {
     remoteLocked = lock;
@@ -571,11 +571,14 @@ void DGLabDevice::setDeviceRemoteLocked(bool lock) {
         uiDeviceOperator->setAutoChange(DeviceStateEnum::DeviceChannel::CHANNEL_A, false);
         uiDeviceOperator->setAutoChange(DeviceStateEnum::DeviceChannel::CHANNEL_B, false);
         uiDeviceItem->changeState(DeviceStateEnum::DeviceState::READY_REMOTEMANAGED);
+        uiDeviceOperator->setEnabled(false);
     } else {
         if (controller->state() == QLowEnergyController::UnconnectedState) {
             uiDeviceItem->changeState(DeviceStateEnum::DeviceState::UNCONNECTED);
+            uiDeviceOperator->setEnabled(false);
         } else {
             uiDeviceItem->changeState(DeviceStateEnum::DeviceState::READY);
+            uiDeviceOperator->setEnabled(true);
         }
     }
 }

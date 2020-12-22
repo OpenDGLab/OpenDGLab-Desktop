@@ -36,12 +36,20 @@ elseif(APPLE)
 else()
     message(FATAL_ERROR "This platform may not support.")
 endif()
-
+find_package(QT NAMES Qt6 Qt5 COMPONENTS Widgets Bluetooth Network Websockets REQUIRED)
+find_package(Qt${QT_VERSION_MAJOR} COMPONENTS Widgets Bluetooth Network Websockets REQUIRED)
 include_directories(${OPENDGLABCORE_HEADER})
-find_package(QT NAMES Qt6 Qt5 COMPONENTS Widgets Bluetooth REQUIRED)
-find_package(Qt${QT_VERSION_MAJOR} COMPONENTS Widgets Bluetooth REQUIRED)
 add_compile_options("$<$<C_COMPILER_ID:MSVC>:/utf-8>")
 add_compile_options("$<$<CXX_COMPILER_ID:MSVC>:/utf-8>")
+
+set(CMAKE_INCLUDE_CURRENT_DIR TRUE)
+find_package(protobuf CONFIG REQUIRED)
+set_property(SOURCE proto/app.pb.h PROPERTY SKIP_AUTOGEN ON)
+set_property(SOURCE proto/app.pb.cc PROPERTY SKIP_AUTOGEN ON)
+set_target_properties(protobuf::libprotobuf PROPERTIES
+  INTERFACE_COMPILE_DEFINITIONS "PROTOBUF_USE_DLLS"
+)
+
 if(Qt5_FOUND AND WIN32 AND TARGET Qt5::qmake AND NOT TARGET Qt5::windeployqt)
     get_target_property(_qt5_qmake_location Qt5::qmake IMPORTED_LOCATION)
 
@@ -65,21 +73,23 @@ file(GLOB_RECURSE OpenDGLabDesktop_SRC
     "src/*.h"
     "src/*.cpp"
     "src/*.ui"
+    "proto/*.proto"
 )
 add_library(libopendglab STATIC IMPORTED)
 set_property(TARGET libopendglab PROPERTY IMPORTED_LOCATION ${OPENDGLABCORE_LIB})
 if (WIN32)
     set(APP_ICON_RESOURCE_WINDOWS "${CMAKE_CURRENT_SOURCE_DIR}/res/icon.rc")
-    add_executable(OpenDGLab-Desktop WIN32 ${OpenDGLabDesktop_SRC} res/image.qrc ${APP_ICON_RESOURCE_WINDOWS})
-    target_link_libraries(OpenDGLab-Desktop PRIVATE Qt${QT_VERSION_MAJOR}::Widgets Qt${QT_VERSION_MAJOR}::Bluetooth libopendglab)
+    add_executable(OpenDGLab-Desktop WIN32 ${OpenDGLabDesktop_SRC} ${appProto_PROTO_SRCS} res/image.qrc ${APP_ICON_RESOURCE_WINDOWS})
+    target_link_libraries(OpenDGLab-Desktop PRIVATE Qt${QT_VERSION_MAJOR}::Widgets Qt${QT_VERSION_MAJOR}::Bluetooth Qt${QT_VERSION_MAJOR}::Network Qt${QT_VERSION_MAJOR}::WebSockets libopendglab protobuf::libprotobuf)
 elseif(LINUX)
-    add_executable(OpenDGLab-Desktop ${OpenDGLabDesktop_SRC} res/image.qrc)
-    target_link_libraries(OpenDGLab-Desktop PRIVATE Qt${QT_VERSION_MAJOR}::Widgets Qt${QT_VERSION_MAJOR}::Bluetooth libopendglab Threads::Threads ${CMAKE_DL_LIBS})
+    add_executable(OpenDGLab-Desktop ${OpenDGLabDesktop_SRC} ${appProto_PROTO_SRCS} res/image.qrc)
+    target_link_libraries(OpenDGLab-Desktop PRIVATE Qt${QT_VERSION_MAJOR}::Widgets Qt${QT_VERSION_MAJOR}::Bluetooth Qt${QT_VERSION_MAJOR}::Network Qt${QT_VERSION_MAJOR}::WebSockets libopendglab protobuf::libprotobuf Threads::Threads ${CMAKE_DL_LIBS})
 elseif(APPLE)
-    add_executable(OpenDGLab-Desktop MACOSX_BUNDLE ${OpenDGLabDesktop_SRC} res/image.qrc ${APP_ICON_MACOSX})
-    target_link_libraries(OpenDGLab-Desktop PRIVATE Qt${QT_VERSION_MAJOR}::Widgets Qt${QT_VERSION_MAJOR}::Bluetooth libopendglab ${CMAKE_DL_LIBS} "-framework AppKit" "-framework CoreData" "-framework Foundation")
+    add_executable(OpenDGLab-Desktop MACOSX_BUNDLE ${OpenDGLabDesktop_SRC} ${appProto_PROTO_SRCS} res/image.qrc ${APP_ICON_MACOSX})
+    target_link_libraries(OpenDGLab-Desktop PRIVATE Qt${QT_VERSION_MAJOR}::Widgets Qt${QT_VERSION_MAJOR}::Bluetooth Qt${QT_VERSION_MAJOR}::Network Qt${QT_VERSION_MAJOR}::WebSockets libopendglab protobuf::libprotobuf ${CMAKE_DL_LIBS} "-framework AppKit" "-framework CoreData" "-framework Foundation")
 endif()
 
+protobuf_generate(TARGET OpenDGLab-Desktop)
 
 if(TARGET Qt5::windeployqt)
     if("${CMAKE_SIZEOF_VOID_P}" STREQUAL "4")
@@ -123,6 +133,17 @@ if(TARGET Qt5::windeployqt)
         COMMAND ${CMAKE_COMMAND} -E copy_if_different
             $<TARGET_FILE:OpenDGLab-Desktop>
             "$<TARGET_FILE_DIR:OpenDGLab-Desktop>/OpenDGLab-Desktop-${WIN_ARCH}/")
+    if(CMAKE_BUILD_TYPE MATCHES DEBUG OR CMAKE_BUILD_TYPE MATCHES Debug)
+        add_custom_command(TARGET OpenDGLab-Desktop POST_BUILD
+            COMMAND ${CMAKE_COMMAND} -E copy_if_different
+                ${CMAKE_CURRENT_BINARY_DIR}/libprotobufd.dll
+                "$<TARGET_FILE_DIR:OpenDGLab-Desktop>/OpenDGLab-Desktop-${WIN_ARCH}/")
+    else()
+        add_custom_command(TARGET OpenDGLab-Desktop POST_BUILD
+            COMMAND ${CMAKE_COMMAND} -E copy_if_different
+                ${CMAKE_CURRENT_BINARY_DIR}/libprotobuf.dll
+                "$<TARGET_FILE_DIR:OpenDGLab-Desktop>/OpenDGLab-Desktop-${WIN_ARCH}/")
+    endif()
     add_custom_command(TARGET OpenDGLab-Desktop POST_BUILD
         COMMAND ${CMAKE_COMMAND} -E tar "cfv" "OpenDGLab-Desktop-${WIN_ARCH}.zip" --format=zip
         "$<TARGET_FILE_DIR:OpenDGLab-Desktop>/OpenDGLab-Desktop-${WIN_ARCH}")

@@ -32,6 +32,7 @@ int main(int argc, char *argv[])
     QApplication a(argc, argv);
     qInstallMessageHandler(crashingMessageHandler);
     Global::initGlobal();
+    Global::remote->load();
     MainWindow w;
     w.show();
     return a.exec();

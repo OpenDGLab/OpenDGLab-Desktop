@@ -164,4 +164,5 @@ bool DeviceOperator::getAutoChange(DeviceStateEnum::DeviceChannel channel) {
     case DeviceStateEnum::DeviceChannel::CHANNEL_B:
         return ui->chk_b_auto->isChecked();
     }
+    return false;
 }

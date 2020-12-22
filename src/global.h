@@ -18,6 +18,7 @@
 #include <QMutex>
 #include <QBluetoothDeviceDiscoveryAgent>
 #include "dglabDevice.h"
+#include "remote.h"
 
 namespace Global {
     extern QList<QString> basicWaveNameList;
@@ -42,9 +43,12 @@ namespace Global {
     }
     extern bool skipError;
     extern bool skipWarning;
+    extern Remote* remote;
+    extern QList<RemoteClient*> remoteList;
     extern QList<DGLabDevice*> dglabList;
     extern QBluetoothDeviceDiscoveryAgent *bleScanAgent;
     extern QMutex mutex;
+    //extern Remote *remote;
     void initGlobal();
     QList<QString> getWaveList();
 }
