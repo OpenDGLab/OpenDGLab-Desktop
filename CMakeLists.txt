@@ -88,6 +88,7 @@ elseif(APPLE)
     add_executable(OpenDGLab-Desktop MACOSX_BUNDLE ${OpenDGLabDesktop_SRC} ${appProto_PROTO_SRCS} res/image.qrc ${APP_ICON_MACOSX})
     target_link_libraries(OpenDGLab-Desktop PRIVATE Qt${QT_VERSION_MAJOR}::Widgets Qt${QT_VERSION_MAJOR}::Bluetooth Qt${QT_VERSION_MAJOR}::Network Qt${QT_VERSION_MAJOR}::WebSockets libopendglab protobuf::libprotobuf ${CMAKE_DL_LIBS} "-framework AppKit" "-framework CoreData" "-framework Foundation")
 endif()
+target_include_directories(OpenDGLab-Desktop PUBLIC "src")
 
 protobuf_generate(TARGET OpenDGLab-Desktop)
 
