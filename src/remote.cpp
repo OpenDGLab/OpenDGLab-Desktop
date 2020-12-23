@@ -2,7 +2,9 @@
 #include "global.h"
 #include <QMessageBox>
 #include <proto/app.pb.h>
+#ifndef __linux__
 #include <QWebSocketCorsAuthenticator>
+#endif
 Remote::Remote(QObject *parent) : QObject(parent), tcpPort(11240), wsPort(11241)
 {
     tcpServer = new QTcpServer(this);
@@ -30,9 +32,7 @@ bool Remote::isStarted() {
 
 bool Remote::start() {
     bool tcpStart = false;
-#ifndef __linux__
     bool wsStart = false;
-#endif
     if (!isStart) {
         if(tcpServer->listen(QHostAddress::LocalHost, tcpPort)){
             tcpStart = true;

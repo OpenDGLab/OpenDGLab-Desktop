@@ -3,7 +3,9 @@
 
 #include <QObject>
 #include <QTcpServer>
+#ifndef __linux__
 #include <QWebSocketServer>
+#endif
 #include "remoteClient.h"
 class Remote : public QObject
 {
@@ -26,7 +28,9 @@ private:
     int wsPort;
     QList<RemoteClient*> clientList;
     QTcpServer *tcpServer;
+#ifndef __linux__
     QWebSocketServer *wsServer;
+#endif
     bool isStart = false;
     QString getRandomString();
 
