@@ -80,6 +80,10 @@ jobs:
           Copy-Item -Path "OpenDGLab-Core-Unzipped/releaseShared/libopendglab_api.h" -Destination "opendglab-core/header/"
           Copy-Item -Path "OpenDGLab-Core-Unzipped/releaseShared/libopendglab.dll" -Destination "opendglab-core/bin/"
           Copy-Item -Path "OpenDGLab-Core-Unzipped/releaseShared/libopendglab.def" -Destination "opendglab-core/bin/"
+      - name: Get OpenDGLab OpenProtocol file
+        shell: powershell
+        run: |
+          Invoke-WebRequest https://raw.githubusercontent.com/OpenDGLab/OpenDGLab-OpenProtocol/master/app.proto -OutFile proto/app.proto
       - name: Get latest CMake and ninja
         uses: lukka/get-cmake@latest
       - name: Get vcpkg
@@ -154,6 +158,11 @@ jobs:
           mkdir -p opendglab-core/bin
           cp OpenDGLab-Core-Unzipped/releaseStatic/libopendglab_api.h opendglab-core/header/
           cp OpenDGLab-Core-Unzipped/releaseStatic/libopendglab.a opendglab-core/bin/
+      - name: Get OpenDGLab OpenProtocol file
+        shell: bash
+        run: |
+          wget https://raw.githubusercontent.com/OpenDGLab/OpenDGLab-OpenProtocol/master/app.proto
+          mv app.proto proto/
       - name: Get latest CMake and ninja
         uses: lukka/get-cmake@latest
       - name: Get vcpkg
@@ -221,6 +230,11 @@ jobs:
           mkdir -p opendglab-core/bin
           cp OpenDGLab-Core-Unzipped/releaseStatic/libopendglab_api.h opendglab-core/header/
           cp OpenDGLab-Core-Unzipped/releaseStatic/libopendglab.a opendglab-core/bin/
+      - name: Get OpenDGLab OpenProtocol file
+        shell: bash
+        run: |
+          wget https://raw.githubusercontent.com/OpenDGLab/OpenDGLab-OpenProtocol/master/app.proto
+          mv app.proto proto/
       - name: Get latest CMake and ninja
         uses: lukka/get-cmake@latest
       - name: Get vcpkg
