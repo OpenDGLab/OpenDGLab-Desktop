@@ -2,11 +2,16 @@
 #include "global.h"
 #include <QMessageBox>
 #include <proto/app.pb.h>
+#include <QFile>
+#include <QJsonDocument>
+#include <QJsonObject>
+#include <QJsonArray>
 #ifndef __linux__
 #include <QWebSocketCorsAuthenticator>
 #endif
 Remote::Remote(QObject *parent) : QObject(parent), tcpPort(11240), wsPort(11241)
 {
+    load();
     tcpServer = new QTcpServer(this);
 #ifndef __linux__
     wsServer = new QWebSocketServer("127.0.0.1", QWebSocketServer::SslMode::NonSecureMode, this);
@@ -122,6 +127,7 @@ void Remote::doAuth(RemoteClient* client, QString appName, QString appId, QStrin
             client->sendConnected("", "", false);
         }
     }
+    save();
     emit stateChange();
 }
 
@@ -140,9 +146,39 @@ QString Remote::getRandomString() {
 }
 
 void Remote::load() {
-
+    QFile loadFile(QStringLiteral("remote.json"));
+    if (!loadFile.open(QIODevice::ReadOnly)) {
+        return;
+    }
+    QByteArray savedDevice = loadFile.readAll();
+    QJsonDocument loadDoc(QJsonDocument::fromJson(savedDevice));
+    QJsonObject json = loadDoc.object();
+    QJsonArray deviceArray = json["apps"].toArray();
+    preAuth.clear();
+    preAuthName.clear();
+    for (auto array: deviceArray) {
+        QJsonObject obj = array.toObject();
+        preAuth[obj["uuid"].toString()] = obj["token"].toString();
+        preAuthName[obj["uuid"].toString()] = obj["name"].toString();
+    }
+    emit stateChange();
 }
 
 void Remote::save() {
-
+    QFile saveFile(QStringLiteral("remote.json"));
+    if (!saveFile.open(QIODevice::WriteOnly)) {
+        return;
+    }
+    QJsonObject savedObject;
+    QJsonArray remoteArray;
+    for (const auto& remote: preAuthName.keys()) {
+        QJsonObject r;
+        r["uuid"] = remote;
+        r["name"] = preAuthName[remote];
+        r["token"] = preAuth[remote];
+        remoteArray.append(r);
+    }
+    savedObject["apps"] = remoteArray;
+    QJsonDocument saveDoc(savedObject);
+    saveFile.write(saveDoc.toJson());
 }
