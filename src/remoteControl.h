@@ -13,7 +13,7 @@ class RemoteControl : public QWidget
 
 public:
     explicit RemoteControl(QWidget *parent = nullptr);
-    ~RemoteControl();
+    ~RemoteControl() override;
 
 private slots:
     void updateList();

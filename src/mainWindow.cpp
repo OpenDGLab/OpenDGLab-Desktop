@@ -2,7 +2,7 @@
 #include "mainWindow.h"
 #include "global.h"
 #include "scanDevice.h"
-#include "./ui_mainWindow.h"
+#include "ui_mainWindow.h"
 #include <QMenu>
 #include <QMessageBox>
 #include <QFile>
