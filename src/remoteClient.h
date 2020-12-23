@@ -4,14 +4,18 @@
 #include <QObject>
 #include <QList>
 #include <QTcpSocket>
+#ifndef __linux__
 #include <QWebSocket>
+#endif
 
 class RemoteClient : public QObject
 {
     Q_OBJECT
 public:
     explicit RemoteClient(QTcpSocket *tcpSocket, QObject *parent = nullptr);
+#ifndef __linux__
     explicit RemoteClient(QWebSocket *webSocket, QObject *parent = nullptr);
+#endif
     ~RemoteClient() override ;
     void sendConnected(const QString& _uuid, const QString& token, bool isAuth);
     void sendDeviceReset(const QString& deviceId);
@@ -22,7 +26,9 @@ public:
 private:
     bool isWS = false;
     QTcpSocket *tcpSocket = nullptr;
+#ifndef __linux__
     QWebSocket *wsSocket = nullptr;
+#endif
     void readyRead(QByteArray data);
     bool isAuthed = false;
     QString uuid;

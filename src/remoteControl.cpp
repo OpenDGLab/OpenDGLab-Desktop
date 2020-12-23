@@ -8,6 +8,9 @@ RemoteControl::RemoteControl(QWidget *parent) :
     ui(new Ui::RemoteControl)
 {
     ui->setupUi(this);
+#ifdef __linux__
+    ui->sb_ws_port->setVisible(false);
+#endif
     ui->btn_remote_remove->setEnabled(false);
     changeState(false);
     connect(ui->chk_remote, &QCheckBox::stateChanged, this,[this](int state){

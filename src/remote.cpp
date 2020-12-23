@@ -6,6 +6,7 @@
 Remote::Remote(QObject *parent) : QObject(parent), tcpPort(11240), wsPort(11241)
 {
     tcpServer = new QTcpServer(this);
+#ifndef __linux__
     wsServer = new QWebSocketServer("127.0.0.1", QWebSocketServer::SslMode::NonSecureMode, this);
     auto *cors = new QWebSocketCorsAuthenticator("127.0.0.1");
     cors->setAllowed(true);
@@ -13,8 +14,9 @@ Remote::Remote(QObject *parent) : QObject(parent), tcpPort(11240), wsPort(11241)
     connect(wsServer, &QWebSocketServer::originAuthenticationRequired, [](QWebSocketCorsAuthenticator *){
         return true;
     });
-    connect(tcpServer, &QTcpServer::newConnection, this, &Remote::tcpNewConnection);
     connect(wsServer, &QWebSocketServer::newConnection, this, &Remote::wsNewConnection);
+#endif
+    connect(tcpServer, &QTcpServer::newConnection, this, &Remote::tcpNewConnection);
 }
 
 Remote::~Remote()
@@ -28,20 +30,28 @@ bool Remote::isStarted() {
 
 bool Remote::start() {
     bool tcpStart = false;
+#ifndef __linux__
     bool wsStart = false;
+#endif
     if (!isStart) {
         if(tcpServer->listen(QHostAddress::LocalHost, tcpPort)){
             tcpStart = true;
         }
+#ifndef __linux__
         if (wsServer->listen(QHostAddress::LocalHost, wsPort)) {
             wsStart = true;
         }
+#else
+        wsStart = true;
+#endif
         if (tcpStart && wsStart){
             isStart = true;
             return true;
         }
         if (tcpStart) tcpServer->close();
+#ifndef __linux__
         if (wsStart) wsServer->close();
+#endif
         return false;
     }
     return true;
@@ -50,7 +60,9 @@ bool Remote::start() {
 void Remote::stop() {
     if (isStart) {
         tcpServer->close();
+#ifndef __linux__
         wsServer->close();
+#endif
         for(auto r: Global::remoteList) {
             r->close();
         }
@@ -72,10 +84,12 @@ void Remote::tcpNewConnection() {
     Global::remoteList.push_back(client);
 }
 void Remote::wsNewConnection() {
+#ifndef __linux__
     auto socket = wsServer->nextPendingConnection();
     auto* client = new RemoteClient(socket);
     connect(client, &RemoteClient::doAuth, this, &Remote::doAuth);
     Global::remoteList.push_back(client);
+#endif
 }
 
 void Remote::doAuth(RemoteClient* client, QString appName, QString appId, QString token) {

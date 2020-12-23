@@ -19,6 +19,7 @@ RemoteClient::RemoteClient(QTcpSocket *tcpSocket, QObject *parent) : QObject(par
         readyRead(bytes);
     });
 }
+#ifndef __linux__
 RemoteClient::RemoteClient(QWebSocket *wsSocket, QObject *parent) : QObject(parent), wsSocket(wsSocket), isWS(true)
 {
     connect(wsSocket, &QWebSocket::disconnected, this, [this](){
@@ -28,10 +29,13 @@ RemoteClient::RemoteClient(QWebSocket *wsSocket, QObject *parent) : QObject(pare
         readyRead(message);
     });
 }
+#endif
 
 RemoteClient::~RemoteClient() {
     if (isWS) {
+#ifndef __linux__
         wsSocket->close();
+#endif
     } else {
         tcpSocket->close();
     }
@@ -323,12 +327,12 @@ void RemoteClient::readyRead(QByteArray data) {
                                 case com::github::opendglab::CHANNEL_A:
                                 {
                                     for (const auto& c: customWave) {
-                                        if(c.bytes_size() == 3) {
+                                        if(c.bytes().size() == 3) {
                                             auto array = new QByteArray(3, Qt::Initialization::Uninitialized);
                                             const auto& cb = c.bytes();
-                                            array->data()[0] = (char)cb.data()[0];
-                                            array->data()[1] = (char)cb.data()[1];
-                                            array->data()[2] = (char)cb.data()[2];
+                                            array->data()[0] = cb[0];
+                                            array->data()[1] = cb[1];
+                                            array->data()[2] = cb[2];
                                             r->addCustomWaveAPI(DeviceStateEnum::DeviceChannel::CHANNEL_A, *array);
                                         }
                                     }
@@ -337,12 +341,12 @@ void RemoteClient::readyRead(QByteArray data) {
                                 case com::github::opendglab::CHANNEL_B:
                                 {
                                     for (const auto& c: customWave) {
-                                        if(c.bytes_size() == 3) {
+                                        if(c.bytes().size() == 3) {
                                             auto array = new QByteArray(3, Qt::Initialization::Uninitialized);
                                             const auto& cb = c.bytes();
-                                            array->data()[0] = (char)cb.data()[0];
-                                            array->data()[1] = (char)cb.data()[1];
-                                            array->data()[2] = (char)cb.data()[2];
+                                            array->data()[0] = cb[0];
+                                            array->data()[1] = cb[1];
+                                            array->data()[2] = cb[2];
                                             r->addCustomWaveAPI(DeviceStateEnum::DeviceChannel::CHANNEL_B, *array);
                                         }
                                     }
@@ -392,7 +396,9 @@ void RemoteClient::readyRead(QByteArray data) {
     }
     QByteArray byteArray(response.SerializeAsString().c_str(), response.ByteSizeLong());
     if(isWS) {
+#ifndef __linux__
         wsSocket->sendBinaryMessage(byteArray);
+#endif
     } else {
         tcpSocket->write(byteArray);
     }
@@ -409,7 +415,9 @@ void RemoteClient::sendConnected(const QString& _uuid, const QString& token, boo
     this->isAuthed = isAuth;
     this->uuid = _uuid;
     if(isWS) {
+#ifndef __linux__
         wsSocket->sendBinaryMessage(byteArray);
+#endif
     } else {
         tcpSocket->write(byteArray);
     }
@@ -420,7 +428,9 @@ void RemoteClient::sendConnected(const QString& _uuid, const QString& token, boo
 
 void RemoteClient::close() {
     if (isWS) {
+#ifndef __linux__
         wsSocket->close();
+#endif
     } else {
         tcpSocket->close();
     }
@@ -440,7 +450,9 @@ void RemoteClient::sendDeviceReset(const QString &deviceId) {
         response.set_allocated_deviceid(sDeviceId);
         QByteArray byteArray(response.SerializeAsString().c_str(), response.ByteSizeLong());
         if(isWS) {
+#ifndef __linux__
             wsSocket->sendBinaryMessage(byteArray);
+#endif
         } else {
             tcpSocket->write(byteArray);
         }
@@ -462,7 +474,9 @@ void RemoteClient::sendPowerUpdate(const QString &deviceId, int channel_a, int c
         response.set_allocated_strength(strength);
         QByteArray byteArray(response.SerializeAsString().c_str(), response.ByteSizeLong());
         if(isWS) {
+#ifndef __linux__
             wsSocket->sendBinaryMessage(byteArray);
+#endif
         } else {
             tcpSocket->write(byteArray);
         }
