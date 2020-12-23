@@ -82,6 +82,16 @@ jobs:
           Copy-Item -Path "OpenDGLab-Core-Unzipped/releaseShared/libopendglab.def" -Destination "opendglab-core/bin/"
       - name: Get latest CMake and ninja
         uses: lukka/get-cmake@latest
+      - name: Get vcpkg
+        uses: lukka/run-vcpkg@v6
+        with:
+         setupOnly: true
+      - name: Install protobuf
+        shell: cmd
+        env:
+          vc_arch: ${{ matrix.msvc_arch }}
+        run: |
+          %VCPKG_ROOT%/vcpkg install protobuf:%vc_arch%-windows
       - name: Windows Build
         shell: cmd
         env:
@@ -93,7 +103,7 @@ jobs:
           cd ../..
           mkdir build
           cd build
-          cmake -G "Ninja" -DCMAKE_BUILD_TYPE=MinSizeRel ..
+          cmake -G "Ninja" -DCMAKE_BUILD_TYPE=MinSizeRel -DCMAKE_TOOLCHAIN_FILE=%VCPKG_ROOT%\scripts\buildsystems\vcpkg.cmake ..
           cmake --build . --target all
           cd ..
       - name: Upload Release Asset Windows x86
@@ -130,7 +140,7 @@ jobs:
           version: ${{ matrix.qt_ver }}
       - name: Install Package...
         run: |
-          sudo apt install -y unzip libxcb-* libgl1-mesa-dev
+          sudo apt install -y unzip libxcb-* libgl1-mesa-dev 
       - name: Checkout
         uses: actions/checkout@v1
       - name: Get OpenDGLab Core Linux x64
@@ -144,12 +154,19 @@ jobs:
           cp OpenDGLab-Core-Unzipped/releaseStatic/libopendglab.a opendglab-core/bin/
       - name: Get latest CMake and ninja
         uses: lukka/get-cmake@latest
+      - name: Get vcpkg
+        uses: lukka/run-vcpkg@v6
+        with:
+         setupOnly: true
+      - name: Install protobuf
+        run: |
+          $VCPKG_ROOT/vcpkg install protobuf
       - name: Linux Build
         shell: bash
         run: |
           mkdir build
           cd build
-          cmake -DCMAKE_BUILD_TYPE=MinSizeRel ..
+          cmake -DCMAKE_BUILD_TYPE=MinSizeRel -DCMAKE_TOOLCHAIN_FILE=%VCPKG_ROOT%\scripts\buildsystems\vcpkg.cmake ..
           cmake --build . --target all
           cd ..
       - name: Packaging...
@@ -202,12 +219,19 @@ jobs:
           cp OpenDGLab-Core-Unzipped/releaseStatic/libopendglab.a opendglab-core/bin/
       - name: Get latest CMake and ninja
         uses: lukka/get-cmake@latest
+      - name: Get vcpkg
+        uses: lukka/run-vcpkg@v6
+        with:
+         setupOnly: true
+      - name: Install protobuf
+        run: |
+          $VCPKG_ROOT/vcpkg install protobuf
       - name: MacOS Build
         shell: bash
         run: |
           mkdir build
           cd build
-          cmake -DCMAKE_BUILD_TYPE=MinSizeRel ..
+          cmake -DCMAKE_BUILD_TYPE=MinSizeRel -DCMAKE_TOOLCHAIN_FILE=%VCPKG_ROOT%\scripts\buildsystems\vcpkg.cmake ..
           cmake --build . --target all
           cd ..
       - name: Packaging...
