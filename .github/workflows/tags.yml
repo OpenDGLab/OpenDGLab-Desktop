@@ -144,6 +144,7 @@ jobs:
         uses: jurplel/install-qt-action@v2.11.1
         with:
           version: ${{ matrix.qt_ver }}
+          modules: qtwebsockets
       - name: Install Package...
         run: |
           sudo apt install -y unzip libxcb-* libgl1-mesa-dev 

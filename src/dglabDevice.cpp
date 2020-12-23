@@ -530,7 +530,7 @@ QString DGLabDevice::getWaveAPI(DeviceStateEnum::DeviceChannel channel) {
     case DeviceStateEnum::DeviceChannel::CHANNEL_B:
         return uiDeviceOperator->getWaveB();
     }
-    return false;
+    return "";
 }
 void DGLabDevice::setWaveAPI(DeviceStateEnum::DeviceChannel channel, QString str) {
     QString wave;
