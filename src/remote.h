@@ -5,8 +5,11 @@
 #include <QTcpServer>
 #ifndef __linux__
 #include <QWebSocketServer>
+#include <QtCore/QRandomGenerator>
+
 #endif
 #include "remoteClient.h"
+#include "autoRemoteProtocolPinger.h"
 class Remote : public QObject
 {
     Q_OBJECT
@@ -26,6 +29,7 @@ public:
 private:
     int tcpPort;
     int wsPort;
+    QRandomGenerator qrng;
     QList<RemoteClient*> clientList;
     QTcpServer *tcpServer;
 #ifndef __linux__
@@ -33,6 +37,7 @@ private:
 #endif
     bool isStart = false;
     QString getRandomString();
+    AutoRemoteProtocolPinger* autoRemoteProtocolPinger = nullptr;
 
 private slots:
     void tcpNewConnection();

@@ -12,6 +12,7 @@ void crashingMessageHandler(QtMsgType type, const QMessageLogContext& context, c
             fprintf(stderr, "Info: %s (%s:%u, %s)\n", localMsg.constData(), context.file, context.line, context.function);
             break;
         case QtWarningMsg:
+            fprintf(stderr, "Warning: %s (%s:%u, %s)\n", localMsg.constData(), context.file, context.line, context.function);
             if(!Global::skipWarning) fprintf(stderr, "Warning: %s (%s:%u, %s)\n", localMsg.constData(), context.file, context.line, context.function);
             if(!Global::skipError) abort(); //Index out of range is just a Warning!
             break;

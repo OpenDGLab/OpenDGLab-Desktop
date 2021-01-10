@@ -20,6 +20,7 @@ public:
     void sendConnected(const QString& _uuid, const QString& token, bool isAuth);
     void sendDeviceReset(const QString& deviceId);
     void sendPowerUpdate(const QString &deviceId, int channel_a, int channel_b);
+    void sendPing();
     void close();
     QString getUuid();
 

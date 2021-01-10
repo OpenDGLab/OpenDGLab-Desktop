@@ -3,11 +3,6 @@
 #include "global.h"
 AutoWaveChangerThread::AutoWaveChangerThread(QObject* parent): QThread(parent)
 {
-
-}
-
-AutoWaveChangerThread::~AutoWaveChangerThread()
-{
     timer = new QTimer();
     timer->setInterval(1000);
     connect(timer, &QTimer::timeout, this, [](){
@@ -19,10 +14,14 @@ AutoWaveChangerThread::~AutoWaveChangerThread()
     });
     connect(this, &QThread::finished, timer, &QTimer::stop);
     timer->start();
-    this->exec();
+}
+
+AutoWaveChangerThread::~AutoWaveChangerThread()
+{
+    delete timer;
 }
 
 void AutoWaveChangerThread::run()
 {
-    delete timer;
+    this->exec();
 }

@@ -48,7 +48,7 @@ add_compile_options("$<$<C_COMPILER_ID:MSVC>:/utf-8>")
 add_compile_options("$<$<CXX_COMPILER_ID:MSVC>:/utf-8>")
 
 set(CMAKE_INCLUDE_CURRENT_DIR TRUE)
-find_package(protobuf CONFIG REQUIRED)
+find_package(Protobuf REQUIRED)
 set_property(SOURCE proto/app.pb.h PROPERTY SKIP_AUTOGEN ON)
 set_property(SOURCE proto/app.pb.cc PROPERTY SKIP_AUTOGEN ON)
 set_target_properties(protobuf::libprotobuf PROPERTIES

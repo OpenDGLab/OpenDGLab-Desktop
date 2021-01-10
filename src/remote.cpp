@@ -51,6 +51,12 @@ bool Remote::start() {
 #endif
         if (tcpStart && wsStart){
             isStart = true;
+            if (autoRemoteProtocolPinger == nullptr) {
+                autoRemoteProtocolPinger = new AutoRemoteProtocolPinger();
+            }
+            if (!autoRemoteProtocolPinger->isRunning()) {
+                autoRemoteProtocolPinger->start();
+            }
             return true;
         }
         if (tcpStart) tcpServer->close();
@@ -64,6 +70,13 @@ bool Remote::start() {
 
 void Remote::stop() {
     if (isStart) {
+        if (autoRemoteProtocolPinger != nullptr) {
+            if (autoRemoteProtocolPinger->isRunning()) {
+                autoRemoteProtocolPinger->quit();
+                delete autoRemoteProtocolPinger;
+                autoRemoteProtocolPinger = nullptr;
+            }
+        }
         tcpServer->close();
 #ifndef __linux__
         wsServer->close();
@@ -71,6 +84,7 @@ void Remote::stop() {
         for(auto r: Global::remoteList) {
             r->close();
         }
+        isStart = false;
     }
 }
 
@@ -138,7 +152,7 @@ QString Remote::getRandomString() {
     QString randomString;
     for(int i=0; i<randomStringLength; ++i)
     {
-        int index = qrand() % possibleCharacters.length();
+        int index = (qrng.bounded(INT32_MAX)) % possibleCharacters.length();
         QChar nextChar = possibleCharacters.at(index);
         randomString.append(nextChar);
     }

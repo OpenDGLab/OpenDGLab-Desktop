@@ -32,6 +32,7 @@ RemoteClient::RemoteClient(QWebSocket *wsSocket, QObject *parent) : QObject(pare
 #endif
 
 RemoteClient::~RemoteClient() {
+    isAuthed = false;
     if (isWS) {
 #ifndef __linux__
         wsSocket->close();
@@ -472,6 +473,22 @@ void RemoteClient::sendPowerUpdate(const QString &deviceId, int channel_a, int c
         strength->set_strengtha(channel_a);
         strength->set_strengthb(channel_b);
         response.set_allocated_strength(strength);
+        QByteArray byteArray(response.SerializeAsString().c_str(), response.ByteSizeLong());
+        if(isWS) {
+#ifndef __linux__
+            wsSocket->sendBinaryMessage(byteArray);
+#endif
+        } else {
+            tcpSocket->write(byteArray);
+        }
+    }
+}
+
+void RemoteClient::sendPing() {
+    if (isAuthed) {
+        auto response = com::github::opendglab::DGResponse();
+        response.set_version(1);
+        response.set_event(com::github::opendglab::DGEvent::PING);
         QByteArray byteArray(response.SerializeAsString().c_str(), response.ByteSizeLong());
         if(isWS) {
 #ifndef __linux__
