@@ -5,9 +5,8 @@
 #include <QTcpServer>
 #ifndef __linux__
 #include <QWebSocketServer>
-#include <QtCore/QRandomGenerator>
-
 #endif
+#include <QtCore/QRandomGenerator>
 #include "remoteClient.h"
 #include "autoRemoteProtocolPinger.h"
 class Remote : public QObject
